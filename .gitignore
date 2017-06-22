@@ -8,3 +8,9 @@ ebin/*.beam
 rel/example_project
 .concrete/DEV_MODE
 .rebar
+.erlang.mk/
+aui.config
+aui_web_backend.d
+rel/
+relx.config
+src/*.later
