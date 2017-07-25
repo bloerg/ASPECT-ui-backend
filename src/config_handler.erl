@@ -12,18 +12,23 @@ get_som_config_from_db(DB_connection, SOM_id) ->
     {ok,[{column,<<"max_zoom">>,int4,4,-1,1},
 	 {column,<<"max_x">>,int4,4,-1,1},
 	 {column,<<"max_y">>,int4,4,-1,1},
-	 {column,<<"som_description">>,varchar,-1,260,1}],
+	 {column,<<"som_description">>,varchar,-1,260,1},
+	 {column,<<"min_redshift">>,float4,4,-1,1},
+	 {column,<<"max_redshift">>,float4,4,-1,1}
+	 ],
 	Configuration}
-    = epgsql:equery(DB_connection, "select max_zoom,max_x, max_y, som_description from map_configurations where som_id = $1", [SOM_id]),
+    = epgsql:equery(DB_connection, "select max_zoom,max_x, max_y, som_description, min_redshift, max_redshift from map_configurations where som_id = $1", [SOM_id]),
     case Configuration of 
-	[{Max_zoom,Max_x,Max_y,Som_description}] ->
+	[{Max_zoom,Max_x,Max_y,Som_description,Min_redshift, Max_redshift}] ->
 	    {ok, 
 		[
 		    {max_zoom, Max_zoom}, 
 		    {max_x, Max_x}, 
 		    {max_y, Max_y}, 
 		    {som_description, 
-		    binary_to_list(Som_description)}
+		    binary_to_list(Som_description)},
+		    {min_redshift, Min_redshift},
+		    {max_redshift, Max_redshift}
 		]
 	    };
 	_Else ->
@@ -32,12 +37,15 @@ get_som_config_from_db(DB_connection, SOM_id) ->
 	    
 
 init(Req0, State) ->
-    {ok, DB_connection} = aui_database_helpers:get_db_connection(),
+    {ok, DB_connection} = epgsql:connect("localhost", "postgres", "inQR1WnfnsKNXPKhLtj8gtRgzkZRcerbg4yZ8pM4", [
+        {database, "aspectui_dr13"}, 
+        {timeout, 5000}
+    ]),
     SOM_id = cowboy_req:binding(som_id, Req0), 
 
     
     case get_som_config_from_db(DB_connection, SOM_id) of
-		{ok, [{max_zoom, Max_zoom}, {max_x, Max_x}, {max_y, Max_y}, {som_description, Som_description}]} ->
+		{ok, [{max_zoom, Max_zoom}, {max_x, Max_x}, {max_y, Max_y}, {som_description, Som_description}, {min_redshift, Min_redshift}, {max_redshift, Max_redshift}]} ->
 			_ = epgsql:close(DB_connection),
 			{ok,
 			cowboy_req:reply(
@@ -53,7 +61,9 @@ init(Req0, State) ->
 						    "\"tile_size\":256,",
 						    "\"max_x\":", io_lib:format("~tp", [Max_x]), ",",
 						    "\"max_y\":", io_lib:format("~tp", [Max_y]), ",",
-						    "\"page_title\":", io_lib:format("~tp", [Som_description])
+						    "\"page_title\":", io_lib:format("~tp", [Som_description]), ",",
+						    "\"min_redshift\":", io_lib:format("~tp", [Min_redshift]), ",",
+						    "\"max_redshift\":", io_lib:format("~tp", [Max_redshift])
 						],
 						""
 					) ++
