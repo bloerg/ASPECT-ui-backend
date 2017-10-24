@@ -6,21 +6,43 @@
 
 
 -export([
-    init/2, 
-    %~ info/3, 
-    generate_tiles_with_R/1
+    init/2
+    %~ info/3,
 ]).
 
 
-generate_tiles_with_R(Subtile_data) ->
-    MJDs = string:join(lists:map(fun erlang:integer_to_list/1, [MJD || {MJD, _, _} <- Subtile_data ]), ","),
-    Plates = string:join(lists:map(fun erlang:integer_to_list/1, [Plate || {_, Plate, _} <- Subtile_data ]), ","),
-    Fiberids = string:join(lists:map(fun erlang:integer_to_list/1, [Fiberid || {_, _, Fiberid} <- Subtile_data ]), ","),
-    <<"{ok,",_Tile_hash_from_R:64/binary,"}", _Tail/binary>> = list_to_binary(
-        os:cmd(
+%~ generate_tiles_with_R(Subtile_data) ->
+    %~ MJDs = string:join(lists:map(fun erlang:integer_to_list/1, [MJD || {MJD, _, _} <- Subtile_data ]), ","),
+    %~ Plates = string:join(lists:map(fun erlang:integer_to_list/1, [Plate || {_, Plate, _} <- Subtile_data ]), ","),
+    %~ Fiberids = string:join(lists:map(fun erlang:integer_to_list/1, [Fiberid || {_, _, Fiberid} <- Subtile_data ]), ","),
+    %~ <<"{ok,",_Tile_hash_from_R:64/binary,"}", _Tail/binary>> = list_to_binary(
+        %~ os:cmd(
+            %~ string:join(
+                %~ [   "nice -n 19 ", 
+                    %~ "/home/aspectui/aspectui_spectra_generator/aspectuiplot.R --mjd ",
+                    %~ MJDs,
+                    %~ " --plate ",
+                    %~ Plates,
+                    %~ " --fiberid ",
+                    %~ Fiberids
+                %~ ],
+                %~ ""
+            %~ )
+        %~ )
+    %~ ),
+    %~ % decrease plotter counter by one after generating the tile
+    %~ ets:insert(limits, {running_plotters, ets:lookup_element(limits, running_plotters, 2)  - 1})
+%~ .
+
+generate_tiles(Subtile_data) ->
+    MJDs = string:join(lists:map(fun erlang:integer_to_list/1, [MJD || {MJD, _, _} <- Subtile_data ]), " "),
+    Plates = string:join(lists:map(fun erlang:integer_to_list/1, [Plate || {_, Plate, _} <- Subtile_data ]), " "),
+    Fiberids = string:join(lists:map(fun erlang:integer_to_list/1, [Fiberid || {_, _, Fiberid} <- Subtile_data ]), " "),
+    <<"{ok,",_Tile_hash:64/binary,"}", _Tail/binary>> = list_to_binary(
+    os:cmd(
             string:join(
                 [   "nice -n 19 ", 
-                    "/home/aspectui_test/aspectui_spectra_generator/aspectuiplot.R --mjd ",
+                    "/usr/local/bin/aspectuiplot --mjd ",
                     MJDs,
                     " --plate ",
                     Plates,
@@ -30,11 +52,8 @@ generate_tiles_with_R(Subtile_data) ->
                 ""
             )
         )
-    ),
-    % decrease plotter counter by one after generating the tile
-    ets:insert(limits, {running_plotters, ets:lookup_element(limits, running_plotters, 2)  - 1})
+    )
 .
-
 
 get_spec_ids_from_db(DB_connection, Tile_coordinates, SOM_id) ->
     {SOM_x, SOM_y} = Tile_coordinates,
@@ -98,8 +117,8 @@ init(Req0, State) ->
     ok = epgsql:close(DB_connection),   
 
     Tile_hash = hash_subtile_data(Subtile_data),
-    Filename = lists:concat(["/home/aspectui_test/spec_icons/", Tile_hash, ".png"]),
-    Temp_filename = lists:concat(["/home/aspectui_test/spec_icons/", Tile_hash, ".png.tmp"]),
+    Filename = lists:concat(["/home/aspectui/spec_icons/", Tile_hash, ".png"]),
+    Temp_filename = lists:concat(["/home/aspectui/spec_icons/", Tile_hash, ".png.tmp"]),
     
     % check if the tile is in the process of beeing generated
     case file:read_file_info(Temp_filename) of 
@@ -115,7 +134,8 @@ init(Req0, State) ->
                 State
             };
         {error, enoent} ->
-
+            generate_tiles(Subtile_data),
+            
             case {file:read_file_info(Filename), cowboy_req:binding(exists, Req0)} of 
                 {{ok, File_info}, undefined} -> 
                     Size = File_info#file_info.size,
@@ -129,24 +149,6 @@ init(Req0, State) ->
                     }
                     ;
                 {{error, enoent}, _} -> 
-                    case ets:lookup_element(limits, running_plotters, 2) < 9 of
-                        true ->
-                            % increase plotter counter by one then start plotting of spectra
-                            ets:insert(
-                                limits, 
-                                {
-                                    running_plotters, 
-                                    ets:lookup_element(
-                                        limits, 
-                                        running_plotters, 2
-                                    )  + 1
-                                }
-                            ),
-                            spawn(spec_icon_handler, generate_tiles_with_R, [Subtile_data]);
-                        _ ->
-                            ok
-                    end,
-                            
                     timer:sleep(1000),
                     Req = cowboy_req:reply(202,
                         #{<<"content-type">> => <<"text/plain">>}, 
