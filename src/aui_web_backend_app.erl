@@ -71,7 +71,8 @@ start(_Type, _Args) ->
             %~ end
         %~ end
     %~ ],
-    Positive_integer_constraints = [int, fun(Value) when Value >= 0 -> true; (_) -> false end],
+%    Positive_integer_constraints = [int, fun(Value) when Value >= 0 -> true; (_) -> false end],
+    Positive_integer_constraints = int,
     SOM_id_constraints = Positive_integer_constraints,
     SOM_zoom_constraints = Positive_integer_constraints,
     SOM_x_constraints = Positive_integer_constraints,
@@ -187,6 +188,25 @@ start(_Type, _Args) ->
                     []
                 },
                 
+                % handler for the ra, dec retrieval
+                {
+                    "/:som_id/cel_coords/:som_x/:som_y", 
+                    [
+                        % constraints for the fields in the redshift request
+                        {
+                            % som_id must be an alphanumeric string that can contain the minus and the underscore symbol
+                            som_id, 
+                            SOM_id_constraints
+                        },
+                        % som_zoom must be a an integer larger or equal to 0
+                        {som_x, SOM_x_constraints}, 
+                        % som_zoom must be a an integer larger or equal to 0
+                        {som_y, SOM_y_constraints}
+                    ], 
+                    celestial_coordinates_handler, 
+                    []
+                },
+                
                 % handler for the spectral classification background retrieval
                 {
                     "/:som_id/spec_class/:som_zoom/:som_x/:som_y", 
@@ -255,8 +275,8 @@ start(_Type, _Args) ->
             ]
         }
     ]),
-    {ok, _} = cowboy:start_clear(my_http_listener, 100,
-        [{ip, {127,0,0,1}}, {port, 8001}],
+    {ok, _} = cowboy:start_clear(my_http_listener,
+        [{ip, {127,0,0,1}}, {port, 8000}],
         #{env => #{dispatch => Dispatch}}
     ),
     aui_web_backend_sup:start_link().

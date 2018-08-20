@@ -9,8 +9,8 @@
 % get entry for som_id from map_configurations table and return list
 % of selected configuration parameter
 get_som_coordinates_from_db(DB_connection, {SOM_id, MJD, Plate, Fiberid}) -> 
-    {ok,[{column,<<"som_x">>,int4,4,-1,1},
-	 {column,<<"som_y">>,int4,4,-1,1}],
+    {ok,[{column,<<"som_x">>,int4,_,_,-1,1},
+	 {column,<<"som_y">>,int4,_,_,-1,1}],
 	SOM_coordinates}
     = epgsql:equery(
 	DB_connection, 

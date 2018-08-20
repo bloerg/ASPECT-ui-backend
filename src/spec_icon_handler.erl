@@ -7,7 +7,6 @@
 
 -export([
     init/2
-    %~ info/3,
 ]).
 
 
@@ -57,9 +56,9 @@ generate_tiles(Subtile_data) ->
 
 get_spec_ids_from_db(DB_connection, Tile_coordinates, SOM_id) ->
     {SOM_x, SOM_y} = Tile_coordinates,
-    {ok,[{column,<<"mjd">>,int4,4,-1,1},
-         {column,<<"plate">>,int4,4,-1,1},
-         {column,<<"fiberid">>,int4,4,-1,1}],
+    {ok,[{column,<<"mjd">>,int4,_,_,-1,1},
+         {column,<<"plate">>,int4,_,_,-1,1},
+         {column,<<"fiberid">>,int4,_,_,-1,1}],
         Values} = epgsql:equery(
             DB_connection, 
             string:join([
@@ -81,7 +80,7 @@ get_spec_ids_from_db(DB_connection, Tile_coordinates, SOM_id) ->
 % expect parameters to be valid input since these were subject
 % to verification in the router
 get_subtile_data_from_db(DB_connection, SOM_id, SOM_zoom, SOM_x, SOM_y) -> 
-    {ok,[{column,<<"max_zoom">>,int4,4,-1,1}],[{Max_zoom}]} = epgsql:equery(DB_connection, "select max_zoom from map_configurations where som_id = $1", [SOM_id]),
+    {ok,[{column,<<"max_zoom">>,int4,_,_,-1,1}],[{Max_zoom}]} = epgsql:equery(DB_connection, "select max_zoom from map_configurations where som_id = $1", [SOM_id]),
     % how many subtiles are there in x or y dimension
     Real_edge_length = trunc(math:pow(2, (Max_zoom - SOM_zoom))),
     Subtile_som_coordinates = [ {X, Y} ||
@@ -168,5 +167,6 @@ init(Req0, State) ->
                     
             end
         end.
+
 
 

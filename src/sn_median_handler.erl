@@ -11,7 +11,7 @@
 get_sn_medians_from_db(DB_connection, {SOM_x, SOM_y}, SOM_zoom, SOM_id) ->
     %~ Real_edge_length = trunc(math:pow(2, (Max_zoom - SOM_zoom))),
     
-    {ok,[{column,<<"sn_median">>,{array,float4},-1,-1,1}],Result}
+    {ok,[{column,<<"sn_median">>,{array,float4},_,_,-1,1}],Result}
          = epgsql:equery(
             DB_connection, 
 	    string:join([

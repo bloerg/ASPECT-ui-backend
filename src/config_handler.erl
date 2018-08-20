@@ -9,12 +9,12 @@
 % get entry for som_id from map_configurations table and return list
 % of selected configuration parameter
 get_som_config_from_db(DB_connection, SOM_id) -> 
-    {ok,[{column,<<"max_zoom">>,int4,4,-1,1},
-	 {column,<<"max_x">>,int4,4,-1,1},
-	 {column,<<"max_y">>,int4,4,-1,1},
-	 {column,<<"som_description">>,varchar,-1,260,1},
-	 {column,<<"min_redshift">>,float4,4,-1,1},
-	 {column,<<"max_redshift">>,float4,4,-1,1}
+       {ok,[{column,<<"max_zoom">>,int4,_,_,-1,1},
+	 {column,<<"max_x">>,int4,_,_,-1,1},
+	 {column,<<"max_y">>,int4,_,_,-1,1},
+	 {column,<<"som_description">>,varchar,_,_,260,1},
+	 {column,<<"min_redshift">>,float4,_,_,-1,1},
+	 {column,<<"max_redshift">>,float4,_,_,-1,1}
 	 ],
 	Configuration}
     = epgsql:equery(DB_connection, "select max_zoom,max_x, max_y, som_description, min_redshift, max_redshift from map_configurations where som_id = $1", [SOM_id]),
@@ -37,10 +37,7 @@ get_som_config_from_db(DB_connection, SOM_id) ->
 	    
 
 init(Req0, State) ->
-    {ok, DB_connection} = epgsql:connect("localhost", "postgres", "inQR1WnfnsKNXPKhLtj8gtRgzkZRcerbg4yZ8pM4", [
-        {database, "aspectui_dr13"}, 
-        {timeout, 5000}
-    ]),
+    {ok, DB_connection} = aui_database_helpers:get_db_connection(),
     SOM_id = cowboy_req:binding(som_id, Req0), 
 
     

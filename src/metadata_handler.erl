@@ -9,9 +9,9 @@
 % get entry for som_id from map_configurations table and return list
 % of selected configuration parameter
 get_spec_metadata_from_db(DB_connection, {SOM_id, SOM_x, SOM_y}) -> 
-    {ok,[{column,<<"mjd">>,int4,4,-1,1},
-	 {column,<<"plate">>,int4,4,-1,1},
-	 {column,<<"fiberid">>,int4,4,-1,1}],
+    {ok,[{column,<<"mjd">>,int4,_,_,-1,1},
+	 {column,<<"plate">>,int4,_,_,-1,1},
+	 {column,<<"fiberid">>,int4,_,_,-1,1}],
 	Spec_metadata}
     = epgsql:equery(
 	DB_connection, 
