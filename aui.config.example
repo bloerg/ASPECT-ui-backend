@@ -1,0 +1,4 @@
+{aui_db_host, "localhost"}.
+{aui_db_name, "aui_db"}.
+{aui_db_user, "aui_db_user"}.
+{aui_db_password, "change_me"}.
