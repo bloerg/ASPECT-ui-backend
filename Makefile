@@ -3,7 +3,7 @@ PROJECT_DESCRIPTION = An erlang backend for generating spectra icons and data la
 PROJECT_VERSION = 0.1.0
 
 DEPS = cowboy epgsql
-dep_cowboy_commit = master
+dep_cowboy_commit = 2.4.0
 
 DEP_PLUGINS = cowboy epgsql helpers
 
